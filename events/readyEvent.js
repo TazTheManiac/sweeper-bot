@@ -1,6 +1,6 @@
 const setActivity = require(`${__rootdir}/functions/setActivity`)
 const checkGuildsDir = require(`${__rootdir}/functions/checkGuildsDir`)
-const checkGuildsFiles = require(`${__rootdir}/functions/checkGuildsFiles`)
+const checkGuildFiles = require(`${__rootdir}/functions/checkGuildFiles`)
 
 module.exports = {
 	name: "readyEvent",
@@ -8,10 +8,8 @@ module.exports = {
 
 		console.log("ready");
 
-		// Set the activity of the bot
 		setActivity.execute(client)
-
 		checkGuildsDir.execute()
-		checkGuildsFiles.execute(client)
+		checkGuildFiles.execute(client)
 	}
 };

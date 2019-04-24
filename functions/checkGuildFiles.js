@@ -7,8 +7,7 @@ module.exports = {
 			const filePath = `${__rootdir}/guilds/${guild.id}.json`
 			if (!fs.existsSync(filePath)) {
 				const fileContent = JSON.stringify({
-					prefix: "!",
-					reactRoles: []
+					prefix: "!"
 				}, null, 2)
 				fs.writeFileSync(filePath, fileContent)
 			}

@@ -1,46 +1,46 @@
+const fs = require(`fs`)
 const Discord = require(`discord.js`)
 const colors = require(`${__rootdir}/colors`)
 
 module.exports = {
-	name: 'kick',
+	name: 'prefix',
 	description: 'none',
 	execute(message, args) {
 
-		const guildFile = require(`${__rootdir}/guilds/${message.guild.id}.json`);
+		// allow only members that can manage the server to use this command
+		if (!message.member.permissions.has("MANAGE_GUILD")) return
 
+		// get the options
 		const options = {
-			member: message.guild.members.get(args.shift()),
-			reason: args.join(" ")
+			prefix: args.shift()
 		}
-		if (options.reason === "") options.reason = "No reason specified"
 
-		if (options.member === undefined) {
+		// get the guilds settings file, and the path to it
+		const guildFile = require(`${__rootdir}/guilds/${message.guild.id}.json`);
+		const guildFilePath = `${__rootdir}/guilds/${message.guild.id}.json`
+
+		// if there was no or to many arguments with the command, abort and notify
+		if (args.length > 0 || options.prefix === undefined) {
 			const responseMessage = new Discord.MessageEmbed()
 				.setColor(colors.orange)
-				.addField(`Invalid argument: \`id\``, `The id specified must be correct, and from a member of this server`)
+				.setDescription(`Missing or invalid arguments: \`${guildFile.prefix}prefix <new_prefix>\``)
 				.setFooter(`@${message.member.displayName}`)
 			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 		}
 
-		if (options.reason.length > 512) {
+		// if the new prefix is the same as the old, abort and notify
+		if (options.prefix === guildFile.prefix) {
 			const responseMessage = new Discord.MessageEmbed()
-				.setColor(colors.orange)
-				.addField(`Invalid argument: \`reason\``, `The reason can't be longer than 512 characters`)
+				.setColor(colors.blue)
+				.setDescription(`The new prefix matches the old one, no changes made`)
 				.setFooter(`@${message.member.displayName}`)
 			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 		}
-
-		// if (!options.member.kickable) {
-		// 	const responseMessage = new Discord.MessageEmbed()
-		// 		.setColor(colors.red)
-		// 		.setDescription(`I do not have permission to kick the specified member`)
-		// 		.setFooter(`@${message.member.displayName}`)
-		// 	return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
-		// }
 
 		const responseMessage = new Discord.MessageEmbed()
 			.setColor(colors.blue)
-			.addField(`Kick ${options.member.displayName}, with the following options?`, `Reason: ${options.reason}`)
+			.setDescription(`Update the server prefix to: **${options.prefix}**`)
+			.setFooter(`@${message.member.displayName}`)
 		message.channel.send(responseMessage).then(reactMessage => {
 
 			reactMessage.react("✅")
@@ -54,24 +54,23 @@ module.exports = {
 
 				if (reaction.emoji.name === "✅") {
 					reactMessage.delete()
-					options.member.kick(options.reason).then(kickedMember => {
-						const responseMessage = new Discord.MessageEmbed()
-							.setColor(colors.green)
-							.setDescription(`**Kicked:** ${options.member.displayName}\n**Reason:** ${options.reason}`)
-							.setFooter(`@${message.member.displayName}`)
-						return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
-					}).catch(err => {
-						const responseMessage = new Discord.MessageEmbed()
-							.setColor(colors.red)
-							.setDescription(`There was an error kicking the member`)
-							.setFooter(`@${message.member.displayName}`)
-						return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
-					})
+
+					// write the changes to the guilds settings file
+					guildFile.prefix = options.prefix
+					fs.writeFileSync(guildFilePath, JSON.stringify(guildFile, null, 2))
+
+					// notify the user that the prefix was changed
+					const responseMessage = new Discord.MessageEmbed()
+						.setColor(colors.green)
+						.setDescription(`The new prefix for this server is now: **${options.prefix}**`)
+						.setFooter(`@${message.member.displayName}`)
+					return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+
 				} else if (reaction.emoji.name === "❌") {
 					reactMessage.delete()
 					const responseMessage = new Discord.MessageEmbed()
 						.setColor(colors.blue)
-						.setDescription(`Action was aborted, no member was kicked`)
+						.setDescription(`Action was aborted, no changes was made`)
 						.setFooter(`@${message.member.displayName}`)
 					return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 				}

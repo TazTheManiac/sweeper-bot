@@ -2,7 +2,7 @@ const Discord = require(`discord.js`)
 const colors = require(`${__rootdir}/colors`)
 
 module.exports = {
-	name: 'kick',
+	name: 'ban',
 	description: 'none',
 	execute(message, args) {
 
@@ -10,6 +10,7 @@ module.exports = {
 
 		const options = {
 			member: message.guild.members.get(args.shift()),
+			days: args.shift(),
 			reason: args.join(" ")
 		}
 		if (options.reason === "") options.reason = "No reason specified"
@@ -30,17 +31,25 @@ module.exports = {
 			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 		}
 
-		// if (!options.member.kickable) {
-		// 	const responseMessage = new Discord.MessageEmbed()
-		// 		.setColor(colors.red)
-		// 		.setDescription(`I do not have permission to kick the specified member`)
-		// 		.setFooter(`@${message.member.displayName}`)
-		// 	return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
-		// }
+		if (isNaN(options.days) || options.days < 0 || options.days > 7) {
+			const responseMessage = new Discord.MessageEmbed()
+				.setColor(colors.orange)
+				.addField(`Invalid argument: \`days\``, `The amount of days must be a number (0-7)`)
+				.setFooter(`@${message.member.displayName}`)
+			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+		}
+
+		if (!options.member.bannable) {
+			const responseMessage = new Discord.MessageEmbed()
+				.setColor(colors.red)
+				.setDescription(`I do not have permission to ban the specified member`)
+				.setFooter(`@${message.member.displayName}`)
+			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+		}
 
 		const responseMessage = new Discord.MessageEmbed()
 			.setColor(colors.blue)
-			.addField(`Kick ${options.member.displayName}, with the following options?`, `Reason: ${options.reason}`)
+			.addField(`Ban ${options.member.displayName}, with the following options?`, `Reason: ${options.reason}\nDays: ${options.days}`)
 		message.channel.send(responseMessage).then(reactMessage => {
 
 			reactMessage.react("✅")
@@ -54,16 +63,16 @@ module.exports = {
 
 				if (reaction.emoji.name === "✅") {
 					reactMessage.delete()
-					options.member.kick(options.reason).then(kickedMember => {
+					options.member.ban({days: options.days, reason: options.reason}).then(bannedMember => {
 						const responseMessage = new Discord.MessageEmbed()
 							.setColor(colors.green)
-							.setDescription(`**Kicked:** ${options.member.displayName}\n**Reason:** ${options.reason}`)
+							.setDescription(`**Banned:** ${options.member.displayName}\n**Reason:** ${options.reason}`)
 							.setFooter(`@${message.member.displayName}`)
 						return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 					}).catch(err => {
 						const responseMessage = new Discord.MessageEmbed()
 							.setColor(colors.red)
-							.setDescription(`There was an error kicking the member`)
+							.setDescription(`There was an error banning the member`)
 							.setFooter(`@${message.member.displayName}`)
 						return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 					})
@@ -71,7 +80,7 @@ module.exports = {
 					reactMessage.delete()
 					const responseMessage = new Discord.MessageEmbed()
 						.setColor(colors.blue)
-						.setDescription(`Action was aborted, no member was kicked`)
+						.setDescription(`Action was aborted, no member was banned`)
 						.setFooter(`@${message.member.displayName}`)
 					return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 				}
