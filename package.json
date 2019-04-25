@@ -1,14 +1,10 @@
 {
-  "name": "bot-template",
+  "name": "sweeper-bot",
   "version": "0.0.1",
   "description": "bot template",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "engines": {
-    "node": "8.11.3",
-    "npm": "5.6.0"
   },
   "author": "TazTheManiac",
   "license": "MIT",
