@@ -7,7 +7,12 @@ module.exports = {
 			const filePath = `${__rootdir}/guilds/${guild.id}.json`
 			if (!fs.existsSync(filePath)) {
 				const fileContent = JSON.stringify({
-					prefix: "!"
+					prefix: "!",
+					autoChannels: {
+						enabled: false,
+						categoryId: null,
+						channelId: null
+					}
 				}, null, 2)
 				fs.writeFileSync(filePath, fileContent)
 			}

@@ -3,7 +3,7 @@ const Discord = require(`discord.js`)
 const colors = require(`${__rootdir}/colors`)
 
 module.exports = {
-	name: 'prefix',
+	name: 'disable',
 	description: 'none',
 	execute(client, message, args) {
 
@@ -12,9 +12,8 @@ module.exports = {
 
 		// get the options
 		const options = {
-			prefix: args[0],
-			maxArgs: 1,
-			minArgs: 1,
+			maxArgs: 0,
+			minArgs: 0,
 			waitTime: 20000
 		}
 
@@ -29,23 +28,23 @@ module.exports = {
 		if (args.length > options.maxArgs) {
 			const responseMessage = new Discord.MessageEmbed()
 				.setColor(colors.orange)
-				.setDescription(`To many arguments. Expected a maximum of **${options.nrOfArgs}**, got **${args.length}**`)
+				.setDescription(`To many arguments. Expected a maximum of **${options.maxArgs}**, got **${args.length}**`)
 			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 		}
 
-		// If to few arguments is given, notify the user
+		// If to few arguments is given (although this might be hard with this command), notify the user
 		if (args.length < options.minArgs) {
 			const responseMessage = new Discord.MessageEmbed()
 				.setColor(colors.orange)
-				.setDescription(`To few arguments. Expected a minimum of **${options.nrOfArgs}**, got **${args.length}**`)
+				.setDescription(`To few arguments. Expected a minimum of **${options.minArgs}**, got **${args.length}**`)
 			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 		}
 
-		// if the new prefix is the same as the old, abort and notify
-		if (options.prefix === guildFile.prefix) {
+		// If auto channels is already disabled, abort and notify
+		if (guildFile.autoChannels.enabled === false) {
 			const responseMessage = new Discord.MessageEmbed()
 				.setColor(colors.orange)
-				.setDescription(`The new prefix matches the old one, no changes made`)
+				.setDescription(`Auto channels is already disabled for this server`)
 			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 		}
 
@@ -55,7 +54,7 @@ module.exports = {
 		// Send the verification message
 		const responseMessage = new Discord.MessageEmbed()
 			.setColor(colors.blue)
-			.setDescription(`Change the server prefix to: **${options.prefix}**`)
+			.setDescription(`Disable auto channels for this server`)
 		message.channel.send(responseMessage).then(async verificationMessage => {
 
 			// Add reactions to the verification message
@@ -69,28 +68,28 @@ module.exports = {
  			await verificationMessage.awaitReactions(filter, {max: 1, time: options.waitTime, errors: ["time"]}).then(collected => {
 				const reaction = collected.first()
 
-				// If the user reacted with an ❌, don't change the prefix
+				// If the user reacted with an ❌, don't enable auto channels
 				if (reaction.emoji.name === "❌") {
 					verificationMessage.delete()
 					const responseMessage = new Discord.MessageEmbed()
 						.setColor(colors.blue)
-						.setDescription(`Aborted, did not change the server prefix`)
+						.setDescription(`Aborted, did not disable auto channels`)
 					return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 				}
 
-				// If the user reacted with an ✅, change the prefix
+				// If the user reacted with an ✅, enable auto channels
 				else if (reaction.emoji.name === "✅") {
 					verificationMessage.delete()
 
 					// Update and save the prefix
-					guildFile.prefix = options.prefix
+					guildFile.autoChannels.enabled = false
 					fs.writeFile(guildFilePath, JSON.stringify(guildFile, null, 2), err => {
 
-						// If there was an error saving the prefix, notify the user
+						// If there was an error enabling auto channels, notify the user
 						if (err) {
 							const responseMessage = new Discord.MessageEmbed()
 								.setColor(colors.red)
-								.setDescription(`There was an error changing the server prefix`)
+								.setDescription(`There was an error disabling auto channels`)
 							return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 						}
 
@@ -98,7 +97,7 @@ module.exports = {
 						else {
 							const responseMessage = new Discord.MessageEmbed()
 								.setColor(colors.green)
-								.setDescription(`Changed the server prefix to: **${options.prefix}**`)
+								.setDescription(`Successfully disabled auto channels for the server`)
 							return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 						}
 					})

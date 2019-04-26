@@ -4,7 +4,7 @@ const colors = require(`${__rootdir}/colors`)
 module.exports = {
 	name: 'ban',
 	description: 'none',
-	execute(message, args) {
+	execute(client, message, args) {
 
 		// allow only members that can manage the server to use this command
 		if (!message.member.permissions.has("BAN_MEMBERS", true)) return

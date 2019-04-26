@@ -29,7 +29,7 @@ client.on(`ready`, async () => {
 // Message event
 client.on("message", async message => {
 	const messageEvent = require(`${__rootdir}/events/messageEvent`)
-	messageEvent.execute(message, client.commands)
+	messageEvent.execute(client, message)
 })
 
 client.login(token)

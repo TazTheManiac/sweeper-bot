@@ -1,6 +1,6 @@
 module.exports = {
 	name: "messageEvent",
-	execute(message, commands) {
+	execute(client, message) {
 		const guildFile = require(`${__rootdir}/guilds/${message.guild.id}.json`);
 
 		const prefix = guildFile.prefix
@@ -14,9 +14,17 @@ module.exports = {
 	  const command = args.shift()
 
 		// Commands
-		if (command === "prefix") commands.get('prefix').execute(message, args)
-		if (command === "kick") commands.get('kick').execute(message, args)
-		if (command === "ban") commands.get('ban').execute(message, args)
+		// ========================================
+
+		// Settings commands
+		if (command === 'prefix') client.commands.get('prefix').execute(client, message, args)
+
+		// Mod commands
+		if (command === 'kick') client.commands.get('kick').execute(client, message, args)
+		if (command === 'ban') client.commands.get('ban').execute(client, message, args)
+
+		// Auto channel commands
+		if (command === 'ac') client.commands.get('ac').execute(client, message, args)
 
 		// if (command === "test") commands.get('test').execute(message, args)
 	}
