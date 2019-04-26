@@ -3,14 +3,17 @@ module.exports = {
 	execute(client, message) {
 		const guildFile = require(`${__rootdir}/guilds/${message.guild.id}.json`);
 
-		const prefix = guildFile.prefix
-
 		// If the message don't start with the prefix, the author is a bot, or is sent in a DM, ignore it.
-	  if (!message.content.startsWith(prefix) || message.author.bot || message.channel.type === "dm") return
+	  if (!message.content.startsWith(guildFile.prefix) || message.author.bot || message.channel.type === "dm") return
 
 		// Get the arguments, and the command
 		// Regex explained here: https://stackoverflow.com/a/16261693
-	  const args = message.content.slice(prefix.length).match(/(".*?"|[^"\s]+)+(?=\s*|\s*$)/g)
+	  const args = message.content.slice(guildFile.prefix.length).match(/(".*?"|[^"\s]+)+(?=\s*|\s*$)/g)
+
+		// If any argument starts with a quote character, remove all instances of those from the argument.
+		for (var i = 0; i < args.length; i++) {
+			if (args[i].startsWith(`"`)) args[i] = args[i].replace(/"/g, ``)
+		}
 	  const command = args.shift()
 
 		// Commands
@@ -25,6 +28,9 @@ module.exports = {
 
 		// Auto channel commands
 		if (command === 'ac') client.commands.get('ac').execute(client, message, args)
+		if (command === 'lock') client.commands.get('lock').execute(client, message, args)
+		if (command === 'unlock') client.commands.get('unlock').execute(client, message, args)
+		if (command === 'rename') client.commands.get('rename').execute(client, message, args)
 
 		// if (command === "test") commands.get('test').execute(message, args)
 	}

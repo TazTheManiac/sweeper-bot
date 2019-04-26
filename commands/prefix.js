@@ -29,7 +29,7 @@ module.exports = {
 		if (args.length > options.maxArgs) {
 			const responseMessage = new Discord.MessageEmbed()
 				.setColor(colors.orange)
-				.setDescription(`To many arguments. Expected a maximum of **${options.nrOfArgs}**, got **${args.length}**`)
+				.setDescription(`To many arguments. Expected a maximum of **${options.maxArgs}**, got **${args.length}**`)
 			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 		}
 
@@ -37,7 +37,7 @@ module.exports = {
 		if (args.length < options.minArgs) {
 			const responseMessage = new Discord.MessageEmbed()
 				.setColor(colors.orange)
-				.setDescription(`To few arguments. Expected a minimum of **${options.nrOfArgs}**, got **${args.length}**`)
+				.setDescription(`To few arguments. Expected a minimum of **${options.minArgs}**, got **${args.length}**`)
 			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 		}
 
