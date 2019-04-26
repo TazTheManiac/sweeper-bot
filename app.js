@@ -32,4 +32,9 @@ client.on("message", async message => {
 	messageEvent.execute(client, message)
 })
 
+client.on("voiceStateUpdate", async (oldState, newState) => {
+	const voiceStateUpdateEvent = require(`${__rootdir}/events/voiceStateUpdateEvent`)
+	voiceStateUpdateEvent.execute(client, oldState, newState)
+})
+
 client.login(token)
