@@ -1,42 +1,94 @@
-const guildSettings = require('../guild-settings.json')
-const colors = require('../colors.json')
+const Discord = require(`discord.js`)
+const colors = require(`${__rootdir}/colors`)
 
 module.exports = {
-  name: 'lock',
-  description: 'Used to limit a channel to a specified amount of users',
-  execute(client, message, args) {
-    if (!message.member.voice.channel) {
-      return client.functions.get('responseMsg').execute(message, colors.yellow, "You need to be in a voice channel to use this command.")
-    }
+	name: 'lock',
+	description: 'none',
+	execute(client, message, args) {
 
-    if (!client.functions.get('categoryCheck').execute(message.member.voice.channel.parentID)) {
-      return client.functions.get('responseMsg').execute(message, colors.yellow, "You are not in a lockable channel.")
-    }
+		// allow only members that can manage the server to use this command
+		if (!message.member.permissions.has("MANAGE_GUILD", true)) return
 
-    if (args.length > 1) {
-      return client.functions.get('responseMsg').execute(message, colors.yellow, "This command takes a maximum of one argument.")
-    }
+		// get the options
+		const options = {
+			limit: args[0],
+			voiceChannel: message.member.voice.channel,
+			maxArgs: 1,
+			minArgs: 0,
+			waitTime: 20000
+		}
 
-    let channelLimit
-    if (args.length === 0) channelLimit = message.member.voice.channel.members.size
-    if (args.length === 1) channelLimit = args[0]
+		// get the guilds settings file, and the path to it
+		const guildFile = require(`${__rootdir}/guilds/${message.guild.id}.json`);
+		const guildFilePath = `${__rootdir}/guilds/${message.guild.id}.json`
 
-    if (isNaN(channelLimit)) {
-      return client.functions.get('responseMsg').execute(message, colors.yellow, "The argument given must be a number (2-99)")
-    }
+		// Check for some basic errors
+		// ========================================
 
-    if (channelLimit < 2) {
-      return client.functions.get('responseMsg').execute(message, colors.yellow, "Can't limit a channel to less than 2 users.")
-    }
+		// If auto channels is disabled, ignore the command
+		if (guildFile.autoChannels.enabled === false) return
 
-    if (channelLimit > 99) {
-      return client.functions.get('responseMsg').execute(message, colors.yellow, "Can't limit a channel to more than 99 users.")
-    }
+		// If a channel is set for managing auto channels, ignore if the command is not in that channel
+		if (guildFile.autoChannels.channelId !== null && message.channel.id !== guildFile.autoChannels.channelId) return
 
-    message.member.voice.channel.setUserLimit(channelLimit).then(channel => {
-      return client.functions.get('responseMsg').execute(message, colors.green, `Limit set to ${channelLimit} users.`)
-    }).catch(err => {
-      console.log(err);
-    })
-  }
-}
+		// If to many arguments is given, notify the user
+		if (args.length > options.maxArgs) {
+			const responseMessage = new Discord.MessageEmbed()
+				.setColor(colors.orange)
+				.setDescription(`To many arguments. Expected a maximum of **${options.maxArgs}**, got **${args.length}**`)
+			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+		}
+
+		// If to few arguments is given, notify the user
+		if (args.length < options.minArgs) {
+			const responseMessage = new Discord.MessageEmbed()
+				.setColor(colors.orange)
+				.setDescription(`To few arguments. Expected a minimum of **${options.minArgs}**, got **${args.length}**`)
+			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+		}
+
+		// If the user is not in a channel, abort and notify
+		if (options.voiceChannel === null) {
+			const responseMessage = new Discord.MessageEmbed()
+				.setColor(colors.orange)
+				.setDescription(`You are currently not in a voice channel`)
+			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+		}
+
+		// If the user is not in a manageable channel, abort and notify
+		if (options.voiceChannel.parentID !== guildFile.autoChannels.categoryId) {
+			const responseMessage = new Discord.MessageEmbed()
+				.setColor(colors.orange)
+				.setDescription(`You are currently not in a manageable voice channel`)
+			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+		}
+
+		// If no amount was specified, set it to the amount of users in the voice channel
+		if (options.limit === undefined) options.limit = options.voiceChannel.members.size
+
+		// If the amount specified is not a number, less than 0, or more than 99, abort and notify
+		if (isNaN(options.limit) || options.limit > 99 || options.limit < 2) {
+			const responseMessage = new Discord.MessageEmbed()
+				.setColor(colors.orange)
+				.setDescription(`Invalid limit specified, expected a number 2-99`)
+			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+		}
+
+		// If all checks are passed
+		// ========================================
+
+		// Set the channel limit, and notify
+		options.voiceChannel.setUserLimit(options.limit).then(voiceChannel => {
+			const responseMessage = new Discord.MessageEmbed()
+				.setColor(colors.green)
+				.setDescription(`Limit for the channel **${voiceChannel.name}** now set to **${options.limit}**`)
+			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+		}).catch(err => {
+			const responseMessage = new Discord.MessageEmbed()
+				.setColor(colors.red)
+				.setDescription(`There was an error setting the channel limit`)
+			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+		})
+
+	}
+};
