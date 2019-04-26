@@ -9,12 +9,12 @@ module.exports = {
 		// Get the arguments, and the command
 		// Regex explained here: https://stackoverflow.com/a/16261693
 	  const args = message.content.slice(guildFile.prefix.length).match(/(".*?"|[^"\s]+)+(?=\s*|\s*$)/g)
+		const command = args.shift()
 
 		// If any argument starts with a quote character, remove all instances of those from the argument.
 		for (var i = 0; i < args.length; i++) {
 			if (args[i].startsWith(`"`)) args[i] = args[i].replace(/"/g, ``)
 		}
-	  const command = args.shift()
 
 		// Commands
 		// ========================================
@@ -31,7 +31,5 @@ module.exports = {
 		if (command === 'lock') client.commands.get('lock').execute(client, message, args)
 		if (command === 'unlock') client.commands.get('unlock').execute(client, message, args)
 		if (command === 'rename') client.commands.get('rename').execute(client, message, args)
-
-		// if (command === "test") commands.get('test').execute(message, args)
 	}
 };
