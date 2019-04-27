@@ -1,6 +1,8 @@
+const Discord = require(`discord.js`)
+
 module.exports = {
 	name: "messageEvent",
-	execute(client, message) {
+	async execute(client, message) {
 		const guildFile = require(`${__rootdir}/guilds/${message.guild.id}.json`);
 
 		// If the message don't start with the prefix, the author is a bot, or is sent in a DM, ignore it.
@@ -25,11 +27,16 @@ module.exports = {
 		// Mod commands
 		if (command === 'kick') client.commands.get('kick').execute(client, message, args)
 		if (command === 'ban') client.commands.get('ban').execute(client, message, args)
+		if (command === 'purge') client.commands.get('purge').execute(client, message, args)
 
 		// Auto channel commands
 		if (command === 'ac') client.commands.get('ac').execute(client, message, args)
 		if (command === 'lock') client.commands.get('lock').execute(client, message, args)
 		if (command === 'unlock') client.commands.get('unlock').execute(client, message, args)
 		if (command === 'rename') client.commands.get('rename').execute(client, message, args)
+
+		// React role commands
+		if (command === "rr") client.commands.get('reactRole').execute(client, message, args)
+
 	}
 };

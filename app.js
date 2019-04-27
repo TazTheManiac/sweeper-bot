@@ -32,9 +32,23 @@ client.on("message", async message => {
 	messageEvent.execute(client, message)
 })
 
+// Voice state update event
 client.on("voiceStateUpdate", async (oldState, newState) => {
 	const voiceStateUpdateEvent = require(`${__rootdir}/events/voiceStateUpdateEvent`)
 	voiceStateUpdateEvent.execute(client, oldState, newState)
+})
+
+// Using raw event to catch reaction add/remove on all messages, not just cached ones
+client.on("raw", async packet => {
+	if (packet.t === "MESSAGE_REACTION_ADD") {
+		const messageReactionAddEvent = require(`${__rootdir}/events/messageReactionAddEvent`)
+		messageReactionAddEvent.execute(client, packet)
+	}
+
+	if (packet.t === "MESSAGE_REACTION_REMOVE") {
+		const messageReactionRemoveEvent = require(`${__rootdir}/events/messageReactionRemoveEvent`)
+		messageReactionRemoveEvent.execute(client, packet)
+	}
 })
 
 client.login(token)
