@@ -52,15 +52,11 @@ module.exports = {
 		// Check if the message has a role assosiated with it
 		const indexNr = guildFile.reactRoles.findIndex(function(reactRole) { return reactRole.messageId === options.message.id})
 		if (indexNr === -1) {
-			return console.log("no message");
+			const responseMessage = new Discord.MessageEmbed()
+				.setColor(colors.orange)
+				.setDescription(`That message dont't have a role assosiated with it`)
+			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 		}
-
-		// if (guildFile.reactRoles.find(function(reactRole) { if (reactRole.messageId === options.message.id) return false })) {
-		// 	const responseMessage = new Discord.MessageEmbed()
-		// 		.setColor(colors.orange)
-		// 		.setDescription(`That message dont't have a role assosiated with it`)
-		// 	return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
-		// }
 
 		// If all check are passed
 		// ========================================
