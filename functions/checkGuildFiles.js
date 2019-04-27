@@ -12,7 +12,8 @@ module.exports = {
 						enabled: false,
 						categoryId: null,
 						channelId: null
-					}
+					},
+					reactRoles: []
 				}, null, 2)
 				fs.writeFileSync(filePath, fileContent)
 			}
