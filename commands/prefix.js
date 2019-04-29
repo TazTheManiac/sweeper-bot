@@ -1,14 +1,17 @@
-const fs = require(`fs`)
 const Discord = require(`discord.js`)
+const Sequelize = require('sequelize')
 const colors = require(`${__rootdir}/colors`)
 
 module.exports = {
 	name: 'prefix',
 	description: 'none',
-	execute(client, message, args) {
+	async execute(client, message, args, Prefixes) {
 
 		// allow only members that can manage the server to use this command
 		if (!message.member.permissions.has("MANAGE_GUILD", true)) return
+
+		// Get the prefix from the database
+		const prefix = await Prefixes.findOne({ where: {guild_id: message.guild.id}}).get('prefix')
 
 		// get the options
 		const options = {
@@ -17,10 +20,6 @@ module.exports = {
 			minArgs: 1,
 			waitTime: 20000
 		}
-
-		// get the guilds settings file, and the path to it
-		const guildFile = require(`${__rootdir}/guilds/${message.guild.id}.json`);
-		const guildFilePath = `${__rootdir}/guilds/${message.guild.id}.json`
 
 		// Check for some basic errors
 		// ========================================
@@ -42,7 +41,7 @@ module.exports = {
 		}
 
 		// if the new prefix is the same as the old, abort and notify
-		if (options.prefix === guildFile.prefix) {
+		if (options.prefix === prefix) {
 			const responseMessage = new Discord.MessageEmbed()
 				.setColor(colors.orange)
 				.setDescription(`The new prefix matches the old one, no changes made`)
@@ -66,7 +65,7 @@ module.exports = {
 			const filter = (reaction, user) => { return ["✅", "❌"].includes(reaction.emoji.name) && user.id === message.author.id }
 
 			// Send the verification message
- 			await verificationMessage.awaitReactions(filter, {max: 1, time: options.waitTime, errors: ["time"]}).then(collected => {
+ 			await verificationMessage.awaitReactions(filter, {max: 1, time: options.waitTime, errors: ["time"]}).then(async collected => {
 				const reaction = collected.first()
 
 				// If the user reacted with an ❌, don't change the prefix
@@ -82,29 +81,28 @@ module.exports = {
 				else if (reaction.emoji.name === "✅") {
 					verificationMessage.delete()
 
-					// Update and save the prefix
-					guildFile.prefix = options.prefix
-					fs.writeFile(guildFilePath, JSON.stringify(guildFile, null, 2), err => {
-
-						// If there was an error saving the prefix, notify the user
-						if (err) {
+					// Try to update the prefix and notify of succes, or failure
+					await Prefixes.update({prefix: options.prefix}, {where: {guild_id: message.guild.id} }).then(response => {
+						if (response > 0) {
+							const responseMessage = new Discord.MessageEmbed()
+								.setColor(colors.green)
+								.setDescription(`Changed the server prefix to: **${options.prefix}**`)
+							return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+						} else {
 							const responseMessage = new Discord.MessageEmbed()
 								.setColor(colors.red)
 								.setDescription(`There was an error changing the server prefix`)
 							return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 						}
-
-						// Else show the success message
-						else {
-							const responseMessage = new Discord.MessageEmbed()
-								.setColor(colors.green)
-								.setDescription(`Changed the server prefix to: **${options.prefix}**`)
-							return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
-						}
+					}).catch(err => {
+						console.error(err)
+						const responseMessage = new Discord.MessageEmbed()
+							.setColor(colors.red)
+							.setDescription(`There was an error changing the server prefix`)
+						return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 					})
 				}
 			}).catch(err => {
-
 				// If no reaction was made, abort and notify
 				verificationMessage.delete()
 				const responseMessage = new Discord.MessageEmbed()

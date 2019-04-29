@@ -1,14 +1,15 @@
 const fs = require(`fs`)
 const Discord = require(`discord.js`)
+const Sequelize = require('sequelize')
 const colors = require(`${__rootdir}/colors`)
 
 module.exports = {
 	name: 'ac',
 	description: 'none',
-	execute(client, message, args) {
+	async execute(client, message, args, Prefixes, AutoChannels) {
 
-		// get the guilds settings file
-		const guildFile = require(`${__rootdir}/guilds/${message.guild.id}.json`);
+		// Get the prefix from the database
+		const prefix = await Prefixes.findOne({ where: {guild_id: message.guild.id}}).get('prefix')
 
 		// Commands constructor
 		client.acCommands = new Discord.Collection();
@@ -24,12 +25,12 @@ module.exports = {
 		if (subCommand === undefined) {
 			const responseMessage = new Discord.MessageEmbed()
 				.setColor(colors.orange)
-				.addField(`No arguments given`, `\`${guildFile.prefix}ac [enable, disable, set] ...\``)
+				.addField(`No arguments given`, `\`${prefix}ac [enable, disable, set] ...\``)
 			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 		}
 
-		if (subCommand === `enable`) client.acCommands.get('enable').execute(client, message, args)
-		else if (subCommand === `disable`) client.acCommands.get('disable').execute(client, message, args)
-		else if (subCommand === `set`) client.acCommands.get('set').execute(client, message, args)
+		if (subCommand === `enable`) client.acCommands.get('enable').execute(client, message, args, AutoChannels)
+		else if (subCommand === `disable`) client.acCommands.get('disable').execute(client, message, args, AutoChannels)
+		else if (subCommand === `set`) client.acCommands.get('set').execute(client, message, args, Prefixes, AutoChannels)
 	}
 };

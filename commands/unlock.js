@@ -1,10 +1,11 @@
 const Discord = require(`discord.js`)
+const Sequelize = require('sequelize')
 const colors = require(`${__rootdir}/colors`)
 
 module.exports = {
 	name: 'unlock',
 	description: 'none',
-	execute(client, message, args) {
+	async execute(client, message, args, AutoChannels) {
 
 		// allow only members that can manage the server to use this command
 		if (!message.member.permissions.has("MANAGE_GUILD", true)) return
@@ -13,22 +14,19 @@ module.exports = {
 		const options = {
 			voiceChannel: message.member.voice.channel,
 			maxArgs: 0,
-			minArgs: 0,
-			waitTime: 20000
+			minArgs: 0
 		}
 
-		// get the guilds settings file, and the path to it
-		const guildFile = require(`${__rootdir}/guilds/${message.guild.id}.json`);
-		const guildFilePath = `${__rootdir}/guilds/${message.guild.id}.json`
+		const autoChannels = await AutoChannels.findOne({ where: {guild_id: message.guild.id}})
 
 		// Check for some basic errors
 		// ========================================
 
 		// If auto channels is disabled, ignore the command
-		if (guildFile.autoChannels.enabled === false) return
+		if (autoChannels.get('enabled') === false) return
 
 		// If a channel is set for managing auto channels, ignore if the command is not in that channel
-		if (guildFile.autoChannels.channelId !== null && message.channel.id !== guildFile.autoChannels.channelId) return
+		if (autoChannels.get('channel') !== null && message.channel.id !== autoChannels.get('channel')) return
 
 		// If to many arguments is given, notify the user
 		if (args.length > options.maxArgs) {
@@ -55,7 +53,7 @@ module.exports = {
 		}
 
 		// If the user is not in a manageable channel, abort and notify
-		if (options.voiceChannel.parentID !== guildFile.autoChannels.categoryId) {
+		if (options.voiceChannel.parentID !== autoChannels.get('category')) {
 			const responseMessage = new Discord.MessageEmbed()
 				.setColor(colors.orange)
 				.setDescription(`You are currently not in a manageable voice channel`)

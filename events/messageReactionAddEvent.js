@@ -1,28 +1,27 @@
 module.exports = {
 	name: "messageReactionAddEvent",
-	execute(client, packet) {
+	execute(client, packet, ReactRoles) {
 
 		// If the reaction was not a checkmark, return
 		if (packet.d.emoji.name !== "✅") return
 
-		// get the guild and the settings file
-		const guild = client.guilds.get(packet.d.guild_id)
-		const guildFile = require(`${__rootdir}/guilds/${guild.id}.json`)
+		// Get the database entry
+		ReactRoles.findOne({where: {message_id: packet.d.message_id}}).then(response => {
 
-		// Get the index number
-		const indexNr = guildFile.reactRoles.findIndex(function(reactRole) { return packet.d.message_id === reactRole.messageId})
+			// If an entry was found
+			if (response) {
 
-		// If the message can't be found, return
-		if (indexNr === -1) return
+				// Get the guild and member from the packet, and the role from the entry
+				const guild = client.guilds.get(packet.d.guild_id)
+				const member = guild.members.get(packet.d.user_id)
+				const role = guild.roles.get(response.dataValues.role_id)
 
-		// Get the role and member
-		const reactRole = guild.roles.get(guildFile.reactRoles[indexNr].roleId)
-		const member = guild.members.get(packet.d.user_id)
+				// If the member already have the role, ignore
+				if (member.roles.find(memberRole => {return memberRole.id === role.id}) !== undefined) return
 
-		// If the member already have the role, return
-		if (member.roles.find(role => { return role.id === reactRole.id }) !== undefined) return
-
-		// Else add the role to the member
-		member.roles.add(reactRole).catch(/*do nothing*/)
+				// Give the role to the member
+				member.roles.add(role).catch(/*do nothing*/)
+			}
+		})
 	}
 };

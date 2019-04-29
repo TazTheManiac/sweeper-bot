@@ -15,8 +15,7 @@ module.exports = {
 			amount: args[0],
 			maxLimit: 20,
 			maxArgs: 1,
-			minArgs: 1,
-			waitTime: 20000
+			minArgs: 1
 		}
 
 		// Check for some basic errors

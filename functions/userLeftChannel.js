@@ -1,14 +1,15 @@
+const Sequelize = require('sequelize')
+
 module.exports = {
 	name: "userLeftChannel",
-	execute(client, oldState) {
+	async execute(client, oldState, AutoChannels) {
 		// console.log("user joined a channel");
 		const oldChannel = oldState.channel
 
-		// get the guilds settings file
-		const guildFile = require(`${__rootdir}/guilds/${oldState.guild.id}.json`);
+		autoChannels = await AutoChannels.findOne({ where: {guild_id: oldState.guild.id}})
 
 		// check that auto channels is enable on the server, and that the channel is in the correct category
-		if (guildFile.autoChannels.enabled && oldChannel.parentID === guildFile.autoChannels.categoryId) {
+		if (autoChannels.get('enabled') && oldChannel.parentID === autoChannels.get('category')) {
 
 			// Count the voice channels in the category
 			let channelCount = 0
