@@ -5,13 +5,13 @@ const colors = require(`${__rootdir}/colors`)
 module.exports = {
 	name: 'set',
 	description: 'none',
-	execute(client, message, args) {
+	async execute(client, message, args, Prefixes, AutoChannels) {
 
 		// allow only members that can manage the server to use this command
 		if (!message.member.permissions.has("MANAGE_GUILD", true)) return
 
-		// get the guilds settings file
-		const guildFile = require(`${__rootdir}/guilds/${message.guild.id}.json`);
+		// Get the prefix from the database
+		const prefix = await Prefixes.findOne({ where: {guild_id: message.guild.id}}).get('prefix')
 
 		// Commands constructor
 		client.acCommands.set = new Discord.Collection();
@@ -27,11 +27,11 @@ module.exports = {
 		if (subCommand === undefined) {
 			const responseMessage = new Discord.MessageEmbed()
 				.setColor(colors.orange)
-				.addField(`No arguments given`, `\`${guildFile.prefix}ac set [category, channel]\``)
+				.addField(`No arguments given`, `\`${prefix}ac set [category, channel]\``)
 			return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 		}
 
-		if (subCommand === `category`) client.acCommands.set.get('category').execute(client, message, args)
-		else if (subCommand === `channel`) client.acCommands.set.get('channel').execute(client, message, args)
+		if (subCommand === `category`) client.acCommands.set.get('category').execute(client, message, args, AutoChannels)
+		else if (subCommand === `channel`) client.acCommands.set.get('channel').execute(client, message, args, AutoChannels)
 	}
 };

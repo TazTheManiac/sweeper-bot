@@ -1,14 +1,15 @@
+const Sequelize = require('sequelize')
+
 module.exports = {
 	name: "userJoinedChannel",
-	execute(client, newState) {
+	async execute(client, newState, AutoChannels) {
 		// console.log("user joined a channel");
 		const newChannel = newState.channel
 
-		// get the guilds settings file
-		const guildFile = require(`${__rootdir}/guilds/${newChannel.guild.id}.json`);
+		autoChannels = await AutoChannels.findOne({ where: {guild_id: newState.guild.id}})
 
 		// check that auto channels is enable on the server, and that the channel is in the correct category
-		if (guildFile.autoChannels.enabled && newChannel.parentID === guildFile.autoChannels.categoryId) {
+		if (autoChannels.get('enabled') && newChannel.parentID === autoChannels.get('category')) {
 
 			// If the user is the first to join the channel, clone it
 			if (newChannel.members.size === 1) {

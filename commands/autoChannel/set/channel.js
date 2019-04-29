@@ -5,7 +5,7 @@ const colors = require(`${__rootdir}/colors`)
 module.exports = {
 	name: 'channel',
 	description: 'none',
-	execute(client, message, args) {
+	async execute(client, message, args, AutoChannels) {
 
 		// allow only members that can manage the server to use this command
 		if (!message.member.permissions.has("MANAGE_GUILD", true)) return
@@ -18,9 +18,7 @@ module.exports = {
 			waitTime: 20000
 		}
 
-		// get the guilds settings file, and the path to it
-		const guildFile = require(`${__rootdir}/guilds/${message.guild.id}.json`);
-		const guildFilePath = `${__rootdir}/guilds/${message.guild.id}.json`
+		const currentChannel = await AutoChannels.findOne({ where: {guild_id: message.guild.id}}).get('channel')
 
 		// Check for some basic errors
 		// ========================================
@@ -50,7 +48,7 @@ module.exports = {
 		}
 
 		// If the channel is already used for auto channels, abort and notify
-		if (guildFile.autoChannels.channelId === options.channelId) {
+		if (currentChannel === options.channelId) {
 			const responseMessage = new Discord.MessageEmbed()
 				.setColor(colors.orange)
 				.setDescription(`This channel is already used for auto channels on this server`)
@@ -74,7 +72,7 @@ module.exports = {
 			const filter = (reaction, user) => { return ["✅", "❌"].includes(reaction.emoji.name) && user.id === message.author.id }
 
 			// Send the verification message
- 			await verificationMessage.awaitReactions(filter, {max: 1, time: options.waitTime, errors: ["time"]}).then(collected => {
+ 			await verificationMessage.awaitReactions(filter, {max: 1, time: options.waitTime, errors: ["time"]}).then(async collected => {
 				const reaction = collected.first()
 
 				// If the user reacted with an ❌, don't set the channel
@@ -90,26 +88,46 @@ module.exports = {
 				else if (reaction.emoji.name === "✅") {
 					verificationMessage.delete()
 
-					// Update and save the prefix
-					guildFile.autoChannels.channelId = options.channelId
-					fs.writeFile(guildFilePath, JSON.stringify(guildFile, null, 2), err => {
-
-						// If there was an error setting the channel, notify the user
-						if (err) {
+					// Save the channel
+					await AutoChannels.update({channel: options.channelId}, {where: {guild_id: message.guild.id} }).then(response => {
+						if (response > 0) {
+							const responseMessage = new Discord.MessageEmbed()
+								.setColor(colors.green)
+								.setDescription(`Successfully set the channel for auto channels on the server`)
+							return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+						} else {
 							const responseMessage = new Discord.MessageEmbed()
 								.setColor(colors.red)
 								.setDescription(`There was an error setting the channel`)
 							return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 						}
-
-						// Else show the success message
-						else {
-							const responseMessage = new Discord.MessageEmbed()
-								.setColor(colors.green)
-								.setDescription(`Successfully set the channel for auto channels on the server`)
-							return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
-						}
+					}).catch(err => {
+						const responseMessage = new Discord.MessageEmbed()
+							.setColor(colors.red)
+							.setDescription(`There was an error setting the channel`)
+						return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 					})
+
+					// // Update and save the prefix
+					// guildFile.autoChannels.channelId = options.channelId
+					// fs.writeFile(guildFilePath, JSON.stringify(guildFile, null, 2), err => {
+					//
+					// 	// If there was an error setting the channel, notify the user
+					// 	if (err) {
+					// 		const responseMessage = new Discord.MessageEmbed()
+					// 			.setColor(colors.red)
+					// 			.setDescription(`There was an error setting the channel`)
+					// 		return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+					// 	}
+					//
+					// 	// Else show the success message
+					// 	else {
+					// 		const responseMessage = new Discord.MessageEmbed()
+					// 			.setColor(colors.green)
+					// 			.setDescription(`Successfully set the channel for auto channels on the server`)
+					// 		return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+					// 	}
+					// })
 				}
 			}).catch(err => {
 

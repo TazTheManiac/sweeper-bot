@@ -3,18 +3,16 @@ const userLeftChannel = require(`${__rootdir}/functions/userLeftChannel`)
 
 module.exports = {
 	name: "voiceStateUpdateEvent",
-	execute(client, oldState, newState) {
-		// console.log(oldState.channel);
-		// console.log(newState.channel);
+	execute(client, oldState, newState, AutoChannels) {
 
 		// check if the user joined a channel
 		if (newState.channel !== null) {
-			userJoinedChannel.execute(client, newState)
+			userJoinedChannel.execute(client, newState, AutoChannels)
 		}
 
 		// check if the user left a channel
 		if (oldState.channel !== null) {
-			userLeftChannel.execute(client, oldState)
+			userLeftChannel.execute(client, oldState, AutoChannels)
 		}
 
 	}

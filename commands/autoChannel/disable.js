@@ -5,7 +5,7 @@ const colors = require(`${__rootdir}/colors`)
 module.exports = {
 	name: 'disable',
 	description: 'none',
-	execute(client, message, args) {
+	async execute(client, message, args, AutoChannels) {
 
 		// allow only members that can manage the server to use this command
 		if (!message.member.permissions.has("MANAGE_GUILD", true)) return
@@ -17,9 +17,7 @@ module.exports = {
 			waitTime: 20000
 		}
 
-		// get the guilds settings file, and the path to it
-		const guildFile = require(`${__rootdir}/guilds/${message.guild.id}.json`);
-		const guildFilePath = `${__rootdir}/guilds/${message.guild.id}.json`
+		const currentSetting = await AutoChannels.findOne({ where: {guild_id: message.guild.id}}).get('enabled')
 
 		// Check for some basic errors
 		// ========================================
@@ -41,7 +39,7 @@ module.exports = {
 		}
 
 		// If auto channels is already disabled, abort and notify
-		if (guildFile.autoChannels.enabled === false) {
+		if (currentSetting === false) {
 			const responseMessage = new Discord.MessageEmbed()
 				.setColor(colors.orange)
 				.setDescription(`Auto channels is already disabled for this server`)
@@ -65,7 +63,7 @@ module.exports = {
 			const filter = (reaction, user) => { return ["✅", "❌"].includes(reaction.emoji.name) && user.id === message.author.id }
 
 			// Send the verification message
- 			await verificationMessage.awaitReactions(filter, {max: 1, time: options.waitTime, errors: ["time"]}).then(collected => {
+ 			await verificationMessage.awaitReactions(filter, {max: 1, time: options.waitTime, errors: ["time"]}).then(async collected => {
 				const reaction = collected.first()
 
 				// If the user reacted with an ❌, don't enable auto channels
@@ -81,25 +79,24 @@ module.exports = {
 				else if (reaction.emoji.name === "✅") {
 					verificationMessage.delete()
 
-					// Update and save the prefix
-					guildFile.autoChannels.enabled = false
-					fs.writeFile(guildFilePath, JSON.stringify(guildFile, null, 2), err => {
-
-						// If there was an error enabling auto channels, notify the user
-						if (err) {
+					// Update auto channels settings
+					await AutoChannels.update({enabled: false}, {where: {guild_id: message.guild.id} }).then(response => {
+						if (response > 0) {
+							const responseMessage = new Discord.MessageEmbed()
+								.setColor(colors.green)
+								.setDescription(`Successfully disabled auto channels for the server`)
+							return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
+						} else {
 							const responseMessage = new Discord.MessageEmbed()
 								.setColor(colors.red)
 								.setDescription(`There was an error disabling auto channels`)
 							return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 						}
-
-						// Else show the success message
-						else {
-							const responseMessage = new Discord.MessageEmbed()
-								.setColor(colors.green)
-								.setDescription(`Successfully disabled auto channels for the server`)
-							return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
-						}
+					}).catch(err => {
+						const responseMessage = new Discord.MessageEmbed()
+							.setColor(colors.red)
+							.setDescription(`There was an error disabling auto channels`)
+						return message.channel.send(responseMessage).catch(err => {/*do nothing*/})
 					})
 				}
 			}).catch(err => {
