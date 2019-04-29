@@ -66,6 +66,23 @@ const ReactRoles = sequelize.define('reactRoles', {
 	},
 })
 
+// Warnings model
+const Warnings = sequelize.define('warnings', {
+	guild_id: {
+		type: Sequelize.STRING,
+		allowNull: false,
+	},
+	user_id: {
+		type: Sequelize.STRING,
+		allowNull: false,
+	},
+	reason: {
+		type: Sequelize.STRING,
+		allowNull: false,
+		defaultValue: "No reason specified",
+	}
+})
+
 // Commands constructor
 client.commands = new Discord.Collection();
 const commandFiles = fs.readdirSync(`${__rootdir}/commands`).filter(file => file.endsWith('.js'))
@@ -80,6 +97,7 @@ client.once(`ready`, async () => {
 	Prefixes.sync()
 	AutoChannels.sync()
 	ReactRoles.sync()
+	Warnings.sync()
 
 	const readyEvent = require(`${__rootdir}/events/readyEvent`)
 	readyEvent.execute(client, sequelize, AutoChannels, Prefixes)
@@ -94,7 +112,7 @@ client.once(`guildCreate`, async guild => {
 // Message event
 client.on("message", async message => {
 	const messageEvent = require(`${__rootdir}/events/messageEvent`)
-	messageEvent.execute(client, message, Prefixes, AutoChannels, ReactRoles)
+	messageEvent.execute(client, message, Prefixes, AutoChannels, ReactRoles, Warnings)
 })
 
 // Voice state update event

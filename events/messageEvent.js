@@ -3,13 +3,16 @@ const Sequelize = require('sequelize')
 
 module.exports = {
 	name: "messageEvent",
-	async execute(client, message, Prefixes, AutoChannels, ReactRoles) {
+	async execute(client, message, Prefixes, AutoChannels, ReactRoles, Warnings) {
+
+		// If the message was sent in a direct message, ignore it
+		if (message.channel.type === "dm") return
 
 		// Get the prefix from the database
 		const prefix = await Prefixes.findOne({ where: {guild_id: message.guild.id}}).get('prefix')
 
-		// If the message don't start with the prefix, the author is a bot, or is sent in a DM, ignore it.
-	  if (!message.content.startsWith(prefix) || message.author.bot || message.channel.type === "dm") return
+		// If the message don't start with the prefix, the author is a bot, ignore it.
+	  if (!message.content.startsWith(prefix) || message.author.bot) return
 
 		// Get the arguments, and the command
 		// Regex explained here: https://stackoverflow.com/a/16261693
@@ -30,6 +33,7 @@ module.exports = {
 		// Mod commands
 		if (command === 'kick') client.commands.get('kick').execute(client, message, args)
 		if (command === 'ban') client.commands.get('ban').execute(client, message, args)
+		if (command === 'warn') client.commands.get('warn').execute(client, message, args, Warnings)
 		if (command === 'softban') client.commands.get('softban').execute(client, message, args)
 		if (command === 'purge') client.commands.get('purge').execute(client, message, args)
 
