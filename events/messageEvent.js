@@ -30,6 +30,7 @@ module.exports = {
 		// Mod commands
 		if (command === 'kick') client.commands.get('kick').execute(client, message, args)
 		if (command === 'ban') client.commands.get('ban').execute(client, message, args)
+		if (command === 'softban') client.commands.get('softban').execute(client, message, args)
 		if (command === 'purge') client.commands.get('purge').execute(client, message, args)
 
 		// Auto channel commands
