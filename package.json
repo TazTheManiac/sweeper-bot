@@ -1,16 +1,26 @@
 {
   "name": "sweeper-bot",
   "version": "1.0.0",
-  "description": "Erival's multitasking bot",
+  "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TazTheManiac/sweeper-bot.git"
   },
   "author": "TazTheManiac",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TazTheManiac/sweeper-bot/issues"
+  },
+  "homepage": "https://github.com/TazTheManiac/sweeper-bot#readme",
   "dependencies": {
     "discord.js": "github:discordjs/discord.js",
-    "sequelize": "^5.7.6",
-    "sqlite3": "^4.0.6"
+    "dotenv": "^8.0.0",
+    "mongoose": "^5.6.7",
+    "recursive-readdir": "^2.2.2"
   }
 }
